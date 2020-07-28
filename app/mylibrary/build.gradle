@@ -1,0 +1,80 @@
+apply plugin: 'com.android.library'
+apply plugin: 'signing'
+apply plugin: 'maven-publish'
+
+android {
+    compileSdkVersion 29
+    buildToolsVersion "29.0.3"
+
+    defaultConfig {
+        minSdkVersion 19
+        targetSdkVersion 29
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+
+    task createVerificationFiles(group:'build') {
+        def outputName = "signed-mylibrary-debug.aar"
+        copy {
+            from "build/outputs/aar/mylibrary-debug.aar"
+            into "./"
+            rename { String fileName ->
+                fileName.replace("mylibrary-debug.aar", outputName)
+            }
+        }
+        println("xxx createVerificationFiles")
+        if(file(outputName).isFile()){
+            println("xxx file(outputName).isFile()")
+            //PGP sign the file, this will create a finalApkName.asc file with a PGP signature in it
+            signing {
+                println("xxx signing")
+
+                useGpgCmd()  // useGpgCmd() will use the GPG executable on your system, this should already be present on Linux systems.
+                sign file(outputName)
+            }
+            //SHA256 Checksum
+            println("xxx checksum")
+
+            ant.checksum(file: outputName, fileext: '.SHA256', algorithm: "SHA-256", pattern: "{0} {1}")
+        }
+    }
+
+    publishing {
+        println("Library publishing: run 'gradle publishToMavenLocal' ")
+        publications {
+            mavenAar(MavenPublication) {
+                artifact "./signed-mylibrary-debug.aar"
+                artifact "./signed-mylibrary-debug.aar.asc"
+                artifact "./signed-mylibrary-debug.aar.SHA256"
+                groupId = 'com.example'
+                artifactId = 'mylibrary'
+                version = '1.0.1'
+            }
+        }
+        repositories {
+            mavenLocal()
+        }
+    }
+
+
+}
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+
+}
