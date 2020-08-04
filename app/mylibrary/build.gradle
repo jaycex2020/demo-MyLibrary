@@ -25,13 +25,14 @@ android {
 
 
     task createVerificationFiles(group:'build') {
-        def outputName = "signed-mylibrary-debug.aar"
+//        def outputName = "robloxengine-2.443.409181.aar"
+        def outputName = "robloxengine-2.440.407949.aar"
         copy {
-            from "build/outputs/aar/mylibrary-debug.aar"
+            from "build/outputs/aar/" + outputName
             into "./"
-            rename { String fileName ->
-                fileName.replace("mylibrary-debug.aar", outputName)
-            }
+//            rename { String fileName ->
+//                fileName.replace("robloxengine-2.443.409181.aar", outputName)
+//            }
         }
         println("xxx createVerificationFiles")
         if(file(outputName).isFile()){
@@ -51,21 +52,54 @@ android {
     }
 
     publishing {
+        project.tasks.publish.enabled = false
+
         println("Library publishing: run 'gradle publishToMavenLocal' ")
         publications {
             mavenAar(MavenPublication) {
-                artifact "./signed-mylibrary-debug.aar"
-                artifact "./signed-mylibrary-debug.aar.asc"
-                artifact "./signed-mylibrary-debug.aar.SHA256"
-                groupId = 'com.example'
-                artifactId = 'mylibrary'
-                version = '1.0.1'
+                groupId = 'com.roblox'
+                artifactId = 'robloxengine'
+                version = '2.440.407949'
+
+//                artifact("$buildDir/outputs/aar/$artifactIdX-release.aar")
+//                artifact("./robloxengine-2.440.407949.aar.SHA256")
+
+
+                artifact "./robloxengine-2.440.407949.aar"
+
+                artifact(file("./robloxengine-2.440.407949.aar.asc")) {
+                    classifier = null
+                    extension = 'aar.asc'
+                }
+                artifact(file("./robloxengine-2.440.407949.aar.SHA256")) {
+                    classifier = null
+                    extension = 'aar.SHA256'
+                }
+            }
+
+            mavenAar(MavenPublication) {
+                groupId = 'com.roblox'
+                artifactId = 'libshell'
+                version = '2.440.407949'
+
+                artifact "./libshell-2.440.407949.aar"
+
+                artifact(file("./libshell-2.440.407949.aar.asc")) {
+                    classifier = null
+                    extension = 'aar.asc'
+                }
+                artifact(file("./libshell-2.440.407949.aar.SHA256")) {
+                    classifier = null
+                    extension = 'aar.SHA256'
+                }
             }
         }
+
         repositories {
             mavenLocal()
         }
     }
+
 
 
 }
