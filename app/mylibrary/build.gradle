@@ -24,71 +24,71 @@ android {
     }
 
 
+    // Full path to libshell AAR file
+//roblox.libshellAar="/Users/<user>/perforce/Branches/ClientIntegration/Client/AndroidClient/roblox_libshell/build/outputs/aar/roblox_libshell-release.aar"
+
+// Full path to libroblox AAR file
+//roblox.librobloxAar="/Users/<user>/perforce/Branches/ClientIntegration/Client/AndroidClient/robloxengine/build/outputs/aar/robloxengine-release.aar"
+
     task createVerificationFiles(group:'build') {
-//        def outputName = "robloxengine-2.443.409181.aar"
-        def outputName = "robloxengine-2.440.407949.aar"
         copy {
-            from "build/outputs/aar/" + outputName
-            into "./"
-//            rename { String fileName ->
-//                fileName.replace("robloxengine-2.443.409181.aar", outputName)
-//            }
+            from "$buildDir/outputs/aar/robloxengine-release.aar"
+            into "$buildDir/outputs/aar/sign/"
         }
-        println("xxx createVerificationFiles")
+        def outputName = "$buildDir/outputs/aar/sign/robloxengine-release.aar"
         if(file(outputName).isFile()){
-            println("xxx file(outputName).isFile()")
             //PGP sign the file, this will create a finalApkName.asc file with a PGP signature in it
             signing {
-                println("xxx signing")
-
-                useGpgCmd()  // useGpgCmd() will use the GPG executable on your system, this should already be present on Linux systems.
+                useGpgCmd()
                 sign file(outputName)
             }
             //SHA256 Checksum
-            println("xxx checksum")
+            ant.checksum(file: outputName, fileext: '.SHA256', algorithm: "SHA-256", pattern: "{0} {1}")
+        }
 
+        copy {
+            from "$buildDir/outputs/aar/libshell-release.aar"
+            into "$buildDir/outputs/aar/sign/"
+        }
+        outputName = "$buildDir/outputs/aar/sign/libshell-release.aar"
+        if(file(outputName).isFile()){
+            signing {
+                useGpgCmd()
+                sign file(outputName)
+            }
             ant.checksum(file: outputName, fileext: '.SHA256', algorithm: "SHA-256", pattern: "{0} {1}")
         }
     }
 
     publishing {
-        project.tasks.publish.enabled = false
-
-        println("Library publishing: run 'gradle publishToMavenLocal' ")
         publications {
-            mavenAar(MavenPublication) {
+            mavenAar1(MavenPublication) {
                 groupId = 'com.roblox'
                 artifactId = 'robloxengine'
                 version = '2.440.407949'
 
-//                artifact("$buildDir/outputs/aar/$artifactIdX-release.aar")
-//                artifact("./robloxengine-2.440.407949.aar.SHA256")
-
-
-                artifact "./robloxengine-2.440.407949.aar"
-
-                artifact(file("./robloxengine-2.440.407949.aar.asc")) {
+                artifact "$buildDir/outputs/aar/sign/robloxengine-release.aar"
+                artifact(file("$buildDir/outputs/aar/sign/robloxengine-release.aar.asc")) {
                     classifier = null
                     extension = 'aar.asc'
                 }
-                artifact(file("./robloxengine-2.440.407949.aar.SHA256")) {
+                artifact(file("$buildDir/outputs/aar/sign/robloxengine-release.aar.SHA256")) {
                     classifier = null
                     extension = 'aar.SHA256'
                 }
             }
 
-            mavenAar(MavenPublication) {
+            mavenAar2(MavenPublication) {
                 groupId = 'com.roblox'
                 artifactId = 'libshell'
                 version = '2.440.407949'
 
-                artifact "./libshell-2.440.407949.aar"
-
-                artifact(file("./libshell-2.440.407949.aar.asc")) {
+                artifact "$buildDir/outputs/aar/sign/libshell-release.aar"
+                artifact(file("$buildDir/outputs/aar/sign/libshell-release.aar.asc")) {
                     classifier = null
                     extension = 'aar.asc'
                 }
-                artifact(file("./libshell-2.440.407949.aar.SHA256")) {
+                artifact(file("$buildDir/outputs/aar/sign/libshell-release.aar.SHA256")) {
                     classifier = null
                     extension = 'aar.SHA256'
                 }
@@ -99,9 +99,6 @@ android {
             mavenLocal()
         }
     }
-
-
-
 }
 
 dependencies {
